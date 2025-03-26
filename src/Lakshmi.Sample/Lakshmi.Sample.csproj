@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Lakshmi.Sample.Shared\Lakshmi.Sample.Shared.csproj" />
         <ProjectReference Include="..\Lakshmi\Lakshmi.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
