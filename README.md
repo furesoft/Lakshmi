@@ -19,7 +19,7 @@ To work with Lakshmi you have to reference the dotnet extism pdk. Using extism f
 ## Importing functions
 
 ```csharp
-class MyPoint {//some logic}
+record MyPoint(int x, int y);
 class Test {
   [Import("host", Entry="add")]
   public partial int Add(int a, int b);
