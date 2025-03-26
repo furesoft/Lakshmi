@@ -6,12 +6,12 @@ namespace Lakshmi.Sample;
 public partial class Examples
 {
     [Export("moss_extension_unregister")]
-        public static void Unregister(){
-        }
+    public static void Unregister(){
+    }
 
     [Export("moss_extension_loop")]
-        public static void Loop(){
-        }
+    public static void Loop(){
+    }
 
     [Export("moss_extension_register")]
     public static ExtensionInfo Register()
