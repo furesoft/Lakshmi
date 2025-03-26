@@ -9,7 +9,6 @@ namespace Lakshmi.Tests;
 
 public class SampleSourceGeneratorTests
 {
-
     [Fact]
     public void GenerateClassesBasedOnDDDRegistry()
     {
