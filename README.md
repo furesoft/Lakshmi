@@ -20,6 +20,7 @@ To work with Lakshmi you have to reference the dotnet extism pdk. Using extism f
 
 ```csharp
 record MyPoint(int x, int y);
+
 class Test {
   [Import("host", Entry="add")]
   public partial int Add(int a, int b);
@@ -35,11 +36,9 @@ class Test {
 record ExtensionInfo(string author, string[] allowed_hosts);
 
 class Test {
-
   [Export("register")]
   public static ExtensionInfo Register() {
     return new ExtensionInfo("furesoft", []);
   }
-
 }
 ```
