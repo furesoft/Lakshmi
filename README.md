@@ -1,6 +1,7 @@
 # Lakshmi
 Lakshmi is a source generator for c# to make working with extism pdk more the idiomatic c# way
 
+[![CodeFactor](https://www.codefactor.io/repository/github/furesoft/lakshmi/badge)](https://www.codefactor.io/repository/github/furesoft/lakshmi)
 ![NuGet Version](https://img.shields.io/nuget/v/Lakshmi)
 ![NuGet Downloads](https://img.shields.io/nuget/dt/Lakshmi)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
