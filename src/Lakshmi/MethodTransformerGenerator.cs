@@ -28,6 +28,27 @@ public class MethodTransformerGenerator : ISourceGenerator
                                                     public ExportAttribute(string name) => Name = name;
                                                 }
                                                 """);
+
+            _.AddSource("Entry.g.cs", """
+                                      public static class EntryPoint {
+                                        public static void Main() {}                                  
+                                        }
+                                      """);
+
+            _.AddSource("JsonContextAttribute.g.cs", """
+                                                using System;
+
+                                                [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+                                                public sealed class JsonContextAttribute : Attribute
+                                                {
+                                                    public Type JsonContextType { get; }
+                                                
+                                                    public JsonContextAttribute(Type jsonContextType)
+                                                    {
+                                                        JsonContextType = jsonContextType;
+                                                    }
+                                                }
+                                                """);
         });
 
         context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
@@ -40,45 +61,83 @@ public class MethodTransformerGenerator : ISourceGenerator
 
         var compilation = context.Compilation;
 
-        foreach (var method in receiver.CandidateMethods)
+        foreach (var classGroup in receiver.CandidateMethods.GroupBy(method => method.Parent))
         {
-            var model = compilation.GetSemanticModel(method.SyntaxTree);
-            var methodSymbol = model.GetDeclaredSymbol(method);
+            if (classGroup.Key is not ClassDeclarationSyntax classDeclaration) continue;
 
-            var exportAttribute = methodSymbol?.GetAttributes().FirstOrDefault(ad =>
-                ad.AttributeClass?.ToDisplayString() == "ExportAttribute");
+            var className = classDeclaration.Identifier.Text;
+            var namespaceName = compilation.GetSemanticModel(classDeclaration.SyntaxTree)
+                .GetDeclaredSymbol(classDeclaration)!
+                .ContainingNamespace;
 
-            if (exportAttribute != null)
+            var jsonContextType = GetJsonContextType(compilation, classDeclaration);
+
+            var methodsSource = new StringBuilder();
+
+            foreach (var method in classGroup)
             {
-                var name = exportAttribute.ConstructorArguments[0].Value?.ToString();
-                var methodName = methodSymbol!.Name;
+                var model = compilation.GetSemanticModel(method.SyntaxTree);
+                var methodSymbol = model.GetDeclaredSymbol(method);
 
-                var source = $$"""
+                var exportAttribute = methodSymbol?.GetAttributes().FirstOrDefault(ad =>
+                    ad.AttributeClass?.ToDisplayString() == "ExportAttribute");
 
-                               using System.Runtime.InteropServices;
+                if (exportAttribute != null)
+                {
+                    var name = exportAttribute.ConstructorArguments[0].Value?.ToString();
+                    var methodName = methodSymbol!.Name;
 
-                               namespace {{methodSymbol.ContainingNamespace}};
-                               
-                               public partial class {{methodSymbol.ContainingType.Name}}Exports
-                               {
-                                   [UnmanagedCallersOnly(EntryPoint = "{{name}}")]
-                                   public static ulong {{methodName}}_Entry()
-                                   {
-                                       {{methodSymbol.ContainingType.Name}}.{{methodName}}();
-                               
-                                       return 0;
-                                   }
-                               }
-                               """;
+                    methodsSource.AppendLine($$"""
+                                               [UnmanagedCallersOnly(EntryPoint = "{{name}}")]
+                                                    public static ulong {{methodName}}_Entry()
+                                                    {
+                                               """);
 
-                context.AddSource($"{methodName}_generated.cs", SourceText.From(source, Encoding.UTF8));
+                    if (methodSymbol.ReturnsVoid)
+                    {
+                        methodsSource.AppendLine($"{className}.{methodName}();");
+                    }
+                    else
+                    {
+                        methodsSource.AppendLine($"     var result = {className}.{methodName}();");
+                        methodsSource.AppendLine($"     Extism.Pdk.SetOutputJson(result, {jsonContextType}.Default.{methodSymbol.ReturnType.Name});");
+                    }
+
+                    methodsSource.AppendLine("""
+                                                     return 0;
+                                             }
+                                             """);
+                }
             }
+
+            var source = $$"""
+                using System.Runtime.InteropServices;
+
+                namespace {{namespaceName}};
+                    public static partial class {{className}}
+                    {
+                        {{methodsSource}}
+                    }
+            """;
+
+            context.AddSource($"{className}_Exports_generated.cs", SourceText.From(source, Encoding.UTF8));
         }
+    }
+
+    private static string GetJsonContextType(Compilation compilation, ClassDeclarationSyntax classDeclaration)
+    {
+        var classSymbol = compilation.GetSemanticModel(classDeclaration.SyntaxTree).GetDeclaredSymbol(classDeclaration);
+        var jsonContextAttribute = classSymbol?.GetAttributes().FirstOrDefault(ad =>
+            ad.AttributeClass?.ToDisplayString() == "JsonContextAttribute");
+
+        return jsonContextAttribute != null
+            ? jsonContextAttribute.ConstructorArguments[0].Value?.ToString() ?? "JsonContext.Default"
+            : "JsonContext.Default";
     }
 
     private class SyntaxReceiver : ISyntaxReceiver
     {
-        public List<MethodDeclarationSyntax> CandidateMethods { get; } = new List<MethodDeclarationSyntax>();
+        public List<MethodDeclarationSyntax> CandidateMethods { get; } = new();
 
         public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
         {
