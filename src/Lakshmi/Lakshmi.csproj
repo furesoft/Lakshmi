@@ -13,7 +13,8 @@
         <PackageId>Lakshmi</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Copyright>furesoft</Copyright>
-        <PackageTags>extism wasm</PackageTags>
+        <PackageTags>extism wasm dotnet generator</PackageTags>
+        <RepositoryUrl>https://github.com/furesoft/Lakshmi</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
