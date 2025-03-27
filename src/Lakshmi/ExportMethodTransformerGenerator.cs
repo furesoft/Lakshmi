@@ -12,7 +12,6 @@ namespace Lakshmi;
 [Generator]
 public class ExportMethodTransformerGenerator : ISourceGenerator
 {
-
     public void Initialize(GeneratorInitializationContext context)
     {
         context.RegisterForPostInitialization(_ =>

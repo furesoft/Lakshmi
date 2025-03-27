@@ -14,7 +14,6 @@ public partial class Examples
     [Export("moss_extension_loop")]
     public static void Loop()
     {
-        
     }
 
     [Export("moss_extension_register")]
