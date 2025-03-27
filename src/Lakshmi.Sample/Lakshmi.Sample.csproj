@@ -6,6 +6,9 @@
         <RootNamespace>Lakshmi.Sample</RootNamespace>
         <RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
         <AssemblyName>LakshmiSample</AssemblyName>
+
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
 
     <ItemGroup>

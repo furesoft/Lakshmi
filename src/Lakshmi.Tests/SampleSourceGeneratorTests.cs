@@ -12,7 +12,7 @@ public class SampleSourceGeneratorTests
     [Fact]
     public void GenerateClassesBasedOnDDDRegistry()
     {
-        var generator = new MethodTransformerGenerator();
+        var generator = new ExportMethodTransformerGenerator();
         var driver = CSharpGeneratorDriver.Create(generator);
 
         var compilation = CSharpCompilation.Create(nameof(SampleSourceGeneratorTests), [CSharpSyntaxTree.ParseText("""
