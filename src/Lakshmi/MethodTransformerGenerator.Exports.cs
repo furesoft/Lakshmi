@@ -87,5 +87,4 @@ public static partial class {className}
 
         return string.Join(",", method!.Parameters.Select(_ => $"parameters.{_.Name}"));
     }
-
 }
