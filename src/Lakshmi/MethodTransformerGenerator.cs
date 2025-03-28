@@ -95,7 +95,7 @@ namespace System;" + "\n\n" + sb);
         context.AddSource("Entry.g.cs", """
                                       public static class EntryPoint {
                                         public static void Main() {}                                  
-                                        }
+                                      }
                                       """);
     }
 
