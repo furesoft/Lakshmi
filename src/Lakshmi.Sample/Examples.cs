@@ -8,7 +8,7 @@ namespace Lakshmi.Sample;
 public partial class Examples
 {
     [Import("moss", Entry ="addPoint")]
-    public static extern void AddPoint();
+    static partial void AddPoint();
 
     [Export("moss_extension_unregister")]
     public static void Unregister()

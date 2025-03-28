@@ -12,7 +12,7 @@ namespace Lakshmi;
 
 public partial class MethodTransformerGenerator : ISourceGenerator
 {
-    private static void GenerateImports(GeneratorExecutionContext context, ImportSyntaxReceiver receiver)
+    private static void GenerateImports(GeneratorExecutionContext context, ImportExportSyntaxReceiver receiver)
     {
         /*
     [DllImport(Functions.DLL, EntryPoint = "moss_api_content_new_notebook")]
@@ -21,7 +21,7 @@ public partial class MethodTransformerGenerator : ISourceGenerator
 
         var compilation = context.Compilation;
 
-        foreach (var classGroup in receiver.CandidateMethods.GroupBy(method => method.Parent))
+        foreach (var classGroup in receiver.ImportMethods.GroupBy(method => method.Parent))
         {
             if (classGroup.Key is not ClassDeclarationSyntax classDeclaration) continue;
 
@@ -47,12 +47,19 @@ public partial class MethodTransformerGenerator : ISourceGenerator
                     var methodName = methodSymbol!.Name;
 
                     var @namespace = importAttribute.ConstructorArguments[0].Value?.ToString();
-                    var entryPoint = importAttribute.NamedArguments.Length == 1 ? importAttribute.NamedArguments[0].Value.ToString() : methodName;
+                    var entryPoint = importAttribute.NamedArguments.Length == 1 ? importAttribute.NamedArguments[0].Value.Value.ToString() : methodName;
                     var returnType = methodSymbol.ReturnsVoid ? "void" : "ulong";
+                    var wrappedReturnType = methodSymbol.ReturnsVoid ? "void" : methodSymbol.ReturnType.ToDisplayString();
 
                     methodsSource.AppendLine($@"
     [DllImport({@namespace}, EntryPoint = ""{entryPoint}"")]
     public static extern {returnType} {methodSymbol.Name}({GetImportParameterList(methodSymbol)}); // -> {methodSymbol.ReturnType}");
+
+                    methodsSource.AppendLine($@"
+    public static partial {wrappedReturnType} {methodSymbol.Name}()
+    {{");
+
+                    methodsSource.AppendLine("    }");
                 }
             }
 

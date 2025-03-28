@@ -12,11 +12,11 @@ namespace Lakshmi;
 
 public partial class MethodTransformerGenerator : ISourceGenerator
 {
-    private static void GenerateExports(GeneratorExecutionContext context, ExportSyntaxReceiver receiver)
+    private static void GenerateExports(GeneratorExecutionContext context, ImportExportSyntaxReceiver receiver)
     {
         var compilation = context.Compilation;
 
-        foreach (var classGroup in receiver.CandidateMethods.GroupBy(method => method.Parent))
+        foreach (var classGroup in receiver.ExportMethods.GroupBy(method => method.Parent))
         {
             if (classGroup.Key is not ClassDeclarationSyntax classDeclaration) continue;
 

@@ -21,24 +21,20 @@ public partial class MethodTransformerGenerator : ISourceGenerator
             GenerateAttributes(_);
         });
 
-        context.RegisterForSyntaxNotifications(() => new ExportSyntaxReceiver());
-        context.RegisterForSyntaxNotifications(() => new ImportSyntaxReceiver());
+        context.RegisterForSyntaxNotifications(() => new ImportExportSyntaxReceiver());
     }
 
     public void Execute(GeneratorExecutionContext context)
     {
         List<MethodDeclarationSyntax> candidateMethods = new();
 
-        if (context.SyntaxReceiver is ExportSyntaxReceiver receiver)
+        if (context.SyntaxReceiver is ImportExportSyntaxReceiver receiver)
         {
-            candidateMethods.AddRange(receiver.CandidateMethods);
+            candidateMethods.AddRange(receiver.ExportMethods);
             GenerateExports(context, receiver);
-        }
 
-        if (context.SyntaxReceiver is ImportSyntaxReceiver importReceiver)
-        {
-            candidateMethods.AddRange(importReceiver.CandidateMethods);
-            GenerateImports(context, importReceiver);
+            candidateMethods.AddRange(receiver.ImportMethods);
+            GenerateImports(context, receiver);
         }
 
         GenerateParameterClasses(context, candidateMethods);
