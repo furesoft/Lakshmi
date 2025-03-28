@@ -1,5 +1,5 @@
 ﻿namespace Lakshmi.Sample.Shared;
 
-public class Class1
+public record Point(int X, int Y)
 {
 }

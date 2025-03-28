@@ -1,25 +1,35 @@
 ﻿using Extism.Sdk;
+using Lakshmi.Sample.Shared;
 
 namespace TestHost;
 
-class Program
+partial class Program
 {
     static void Main(string[] args)
     {
         var manifest = new Manifest(new PathWasmSource("LakshmiSample.wasm"));
 
-        //ToDo: add host functions to test return value and calling with parameters
-        using var compiledPlugin = new CompiledPlugin(manifest, [
+        // Host functions hinzufügen
+        using var compiledPlugin = new CompiledPlugin(manifest, new HostFunction[]
+        {
+            HostFunction.FromMethod<int, int, int>("add", null, (plugin, a, b) => a + b),
+            HostFunction.FromMethod<int, int>("square", null, (plugin, a) => a * a),
+            HostFunction.FromMethod("printHello", null, (plugin) => Console.WriteLine("Hello, World!")),
+            HostFunction.FromMethod<int>("printNumber", null, (plugin, a) => Console.WriteLine($"Number: {a}"))
+        }, withWasi: true);
 
-        ], withWasi: true);
         using var plugin = compiledPlugin.Instantiate();
 
         plugin.AllowHttpResponseHeaders();
-        plugin.Call<object>("myFunction", "input");
+        plugin.Call("empty", "");
 
-        //todo: call function with void return type without parameters
-        //todo: call function with void return type with parameters
-        //todo: call function with return type without parameters
-        //todo: call function with return type with parameters
+        var id = plugin.Call<int>("primRet", "");
+        var pt = plugin.Call<Point>("initPoint", "");
+
+        plugin.Call("printHello", "");
+        plugin.Call("printNumber", "42");
+
+        var result1 = plugin.Call<int>("square", "");
+        var result2 = plugin.Call<int>("add", "3,4");
     }
 }
