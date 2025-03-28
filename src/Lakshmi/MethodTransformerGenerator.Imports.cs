@@ -51,12 +51,14 @@ public partial class MethodTransformerGenerator : ISourceGenerator
                     var returnType = methodSymbol.ReturnsVoid ? "void" : "ulong";
                     var wrappedReturnType = methodSymbol.ReturnsVoid ? "void" : methodSymbol.ReturnType.ToDisplayString();
 
-                    methodsSource.AppendLine($@"
-    [DllImport({@namespace}, EntryPoint = ""{entryPoint}"")]
-    public static extern {returnType} {methodSymbol.Name}({GetImportParameterList(methodSymbol)}); // -> {methodSymbol.ReturnType}");
+                    var modifier = GetModifier(methodSymbol);
 
                     methodsSource.AppendLine($@"
-    public static partial {wrappedReturnType} {methodSymbol.Name}()
+    [DllImport(""{@namespace}"", EntryPoint = ""{entryPoint}"")]
+    private static extern {returnType} {methodSymbol.Name}FFI({GetImportParameterList(methodSymbol)}); // -> {methodSymbol.ReturnType}");
+
+                    methodsSource.AppendLine($@"
+    {modifier} static partial {wrappedReturnType} {methodSymbol.Name}()
     {{");
 
                     methodsSource.AppendLine("    }");
@@ -76,6 +78,28 @@ public static partial class {className}
 
             context.AddSource($"{className}_Imports_generated.cs", SourceText.From(source, Encoding.UTF8));
         }
+    }
+
+    private static string GetModifier(IMethodSymbol methodSymbol)
+    {
+        if (methodSymbol.DeclaredAccessibility == Accessibility.Public)
+            return "public";
+
+        if (methodSymbol.DeclaredAccessibility == Accessibility.Internal)
+            return "internal";
+
+        if (methodSymbol.DeclaredAccessibility == Accessibility.Private)
+            return "private";
+
+        if (methodSymbol.DeclaredAccessibility == Accessibility.Protected)
+            return "protected";
+
+        if (methodSymbol.DeclaredAccessibility == Accessibility.NotApplicable)
+        {
+            return string.Empty;
+        }
+
+        return string.Empty;
     }
 
     private static string GetImportParameterList(IMethodSymbol methodSymbol)
