@@ -51,6 +51,7 @@ public partial class MethodTransformerGenerator : ISourceGenerator
                     var returnType = methodSymbol.ReturnsVoid ? "void" : "ulong";
                     var wrappedReturnType = methodSymbol.ReturnsVoid ? "void" : methodSymbol.ReturnType.ToDisplayString();
 
+                    var paramsCall = GenerateParameterInitCode(methodSymbol, methodsSource, jsonContextType);
                     var modifier = GetModifier(methodSymbol);
 
                     methodsSource.AppendLine($@"
@@ -60,6 +61,19 @@ public partial class MethodTransformerGenerator : ISourceGenerator
                     methodsSource.AppendLine($@"
     {modifier} static partial {wrappedReturnType} {methodSymbol.Name}()
     {{");
+
+                    if (methodSymbol.ReturnsVoid)
+                    {
+                        methodsSource.AppendLine($"        {methodName}FFI({paramsCall});");
+                    }
+                    else
+                    {
+                        methodsSource.AppendLine($"        var result = {methodName}FFI({paramsCall});");
+                        methodsSource.AppendLine($"        var block = Extism.MemoryBlock.Find(result);");
+                        methodsSource.AppendLine($"        var json = block.ReadString();");
+                        methodsSource.AppendLine();
+                        methodsSource.AppendLine($"        return System.Text.Json.JsonSerializer.Deserialize(json, {jsonContextType}.Default.{methodSymbol.ReturnType.Name});");
+                    }
 
                     methodsSource.AppendLine("    }");
                 }
