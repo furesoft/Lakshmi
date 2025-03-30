@@ -18,6 +18,8 @@
 
     <ItemGroup>
       <PackageReference Include="Extism.Pdk" Version="1.1.1" />
+      <PackageReference Include="PolyType" Version="0.33.1" />
+      <PackageReference Include="PolyType.Examples" Version="0.33.1" />
     </ItemGroup>
 
 </Project>

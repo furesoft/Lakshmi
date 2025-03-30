@@ -1,22 +1,24 @@
+using PolyType;
+
 namespace Lakshmi.Sample.Models;
 
-using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
-public class MossState
+[GenerateShape]
+public partial class MossState
 {
-    [JsonPropertyName("width")]
+    [PropertyShape(Name = "width")]
     public int Width { get; set; }
 
-    [JsonPropertyName("height")]
+    [PropertyShape(Name = "height")]
     public int Height { get; set; }
 
-    [JsonPropertyName("current_screen")]
+    [PropertyShape(Name = "current_screen")]
     public string CurrentScreen { get; set; }
 
-    [JsonPropertyName("opened_context_menus")]
+    [PropertyShape(Name = "opened_context_menus")]
     public List<string> OpenedContextMenus { get; set; }
 
-    [JsonPropertyName("icons")]
+    [PropertyShape(Name = "icons")]
     public string[] Icons { get; set; }
 }

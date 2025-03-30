@@ -1,10 +1,13 @@
-﻿using System.Text.Json.Serialization;
+﻿using PolyType;
 
 namespace Lakshmi.Sample.Models;
 
-public readonly struct File(string key, string path)
+[GenerateShape]
+public readonly partial struct File(string key, string path)
 {
-    [JsonPropertyName("key")] public string Key { get; } = key;
+    [PropertyShape(Name = "key")]
+    public string Key { get; } = key;
 
-    [JsonPropertyName("path")] public string Path { get; } = path;
+    [PropertyShape(Name = "path")]
+    public string Path { get; } = path;
 }

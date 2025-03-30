@@ -1,17 +1,14 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 using Lakshmi.SyntaxReceiver;
 
 namespace Lakshmi;
 
 [Generator]
-public partial class MethodTransformerGenerator : ISourceGenerator
+public partial class MethodTransformerGenerator
 {
     public void Initialize(GeneratorInitializationContext context)
     {
@@ -79,17 +76,6 @@ namespace System;" + "\n\n" + sb);
         return $"{method.ContainingType.Name}{method.Name}Parameters";
     }
 
-    private static string GetJsonContextType(Compilation compilation, ClassDeclarationSyntax classDeclaration)
-    {
-        var classSymbol = compilation.GetSemanticModel(classDeclaration.SyntaxTree).GetDeclaredSymbol(classDeclaration);
-        var jsonContextAttribute = classSymbol?.GetAttributes().FirstOrDefault(ad =>
-            ad.AttributeClass?.ToDisplayString() == "JsonContextAttribute");
-
-        return jsonContextAttribute != null
-            ? jsonContextAttribute.ConstructorArguments[0].Value?.ToString() ?? "JsonContext.Default"
-            : "JsonContext.Default";
-    }
-
     private static void GenerateEntryPoint(GeneratorPostInitializationContext context)
     {
         context.AddSource("Entry.g.cs", """
@@ -119,21 +105,6 @@ namespace System;" + "\n\n" + sb);
                                                 {
                                                     public string Namespace { get; } = @namespace;
                                                     public string Entry { get; set; }
-                                                }
-                                                """);
-
-        context.AddSource("JsonContextAttribute.g.cs", """
-                                                using System;
-
-                                                [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-                                                public sealed class JsonContextAttribute : Attribute
-                                                {
-                                                    public Type JsonContextType { get; }
-                                                
-                                                    public JsonContextAttribute(Type jsonContextType)
-                                                    {
-                                                        JsonContextType = jsonContextType;
-                                                    }
                                                 }
                                                 """);
     }

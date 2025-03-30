@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Lakshmi.SyntaxReceiver;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using Lakshmi.SyntaxReceiver;
 
 namespace Lakshmi;
 
@@ -30,8 +28,6 @@ public partial class MethodTransformerGenerator : ISourceGenerator
                 .GetDeclaredSymbol(classDeclaration)!
                 .ContainingNamespace;
 
-            var jsonContextType = GetJsonContextType(compilation, classDeclaration);
-
             var methodsSource = new StringBuilder();
 
             foreach (var method in classGroup)
@@ -47,11 +43,13 @@ public partial class MethodTransformerGenerator : ISourceGenerator
                     var methodName = methodSymbol!.Name;
 
                     var @namespace = importAttribute.ConstructorArguments[0].Value?.ToString();
-                    var entryPoint = importAttribute.NamedArguments.Length == 1 ? importAttribute.NamedArguments[0].Value.Value.ToString() : methodName;
-                    var returnType = methodSymbol.ReturnsVoid ? "void" : "ulong";
-                    var wrappedReturnType = methodSymbol.ReturnsVoid ? "void" : methodSymbol.ReturnType.ToDisplayString();
+                    var entryPoint = importAttribute.NamedArguments.Length == 1
+                        ? importAttribute.NamedArguments[0].Value.Value.ToString()
+                        : methodName;
+                    var returnType = GetReturnType(methodSymbol);
+                    var wrappedReturnType =
+                        methodSymbol.ReturnsVoid ? "void" : methodSymbol.ReturnType.ToDisplayString();
 
-                    var paramsCall = GenerateParameterInitCode(methodSymbol, methodsSource, jsonContextType);
                     var modifier = GetModifier(methodSymbol);
 
                     methodsSource.AppendLine($@"
@@ -59,8 +57,9 @@ public partial class MethodTransformerGenerator : ISourceGenerator
     private static extern {returnType} {methodSymbol.Name}FFI({GetImportParameterList(methodSymbol)}); // -> {methodSymbol.ReturnType}");
 
                     methodsSource.AppendLine($@"
-    {modifier} static partial {wrappedReturnType} {methodSymbol.Name}()
+    {modifier} static {wrappedReturnType} {methodSymbol.Name}()
     {{");
+                    var paramsCall = GenerateParameterInitCode(methodSymbol, methodsSource);
 
                     if (methodSymbol.ReturnsVoid)
                     {
@@ -69,10 +68,18 @@ public partial class MethodTransformerGenerator : ISourceGenerator
                     else
                     {
                         methodsSource.AppendLine($"        var result = {methodName}FFI({paramsCall});");
-                        methodsSource.AppendLine($"        var block = Extism.MemoryBlock.Find(result);");
-                        methodsSource.AppendLine($"        var json = block.ReadString();");
-                        methodsSource.AppendLine();
-                        methodsSource.AppendLine($"        return System.Text.Json.JsonSerializer.Deserialize(json, {jsonContextType}.Default.{methodSymbol.ReturnType.Name});");
+                        if (!IsWasmPrimitive(methodSymbol))
+                        {
+                            methodsSource.AppendLine("        var block = Extism.MemoryBlock.Find(result);");
+                            methodsSource.AppendLine("        var json = block.ReadString();");
+                            methodsSource.AppendLine();
+                            methodsSource.AppendLine(
+                                $"        return PolyType.Examples.JsonSerializer.JsonSerializerTS.Deserialize<{methodSymbol.ReturnType.Name}>(json);");
+                        }
+                        else
+                        {
+                            methodsSource.AppendLine("        return result;");
+                        }
                     }
 
                     methodsSource.AppendLine("    }");
@@ -94,6 +101,18 @@ public static partial class {className}
         }
     }
 
+    private static string GetReturnType(IMethodSymbol methodSymbol)
+    {
+        if (methodSymbol.ReturnsVoid) return "void";
+
+        if (IsWasmPrimitive(methodSymbol))
+        {
+            return methodSymbol.ReturnType.ToDisplayString();
+        }
+
+        return "ulong";
+    }
+
     private static string GetModifier(IMethodSymbol methodSymbol)
     {
         if (methodSymbol.DeclaredAccessibility == Accessibility.Public)
@@ -108,10 +127,7 @@ public static partial class {className}
         if (methodSymbol.DeclaredAccessibility == Accessibility.Protected)
             return "protected";
 
-        if (methodSymbol.DeclaredAccessibility == Accessibility.NotApplicable)
-        {
-            return string.Empty;
-        }
+        if (methodSymbol.DeclaredAccessibility == Accessibility.NotApplicable) return string.Empty;
 
         return string.Empty;
     }

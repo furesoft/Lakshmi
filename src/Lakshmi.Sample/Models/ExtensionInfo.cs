@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using PolyType;
 
 namespace Lakshmi.Sample.Models;
 
-public class ExtensionInfo
+[GenerateShape]
+public partial class ExtensionInfo
 {
     [JsonPropertyName("files")] public List<File> Files { get; internal set; } = [];
 }

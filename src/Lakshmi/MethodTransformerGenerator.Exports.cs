@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -10,7 +8,7 @@ using Lakshmi.SyntaxReceiver;
 
 namespace Lakshmi;
 
-public partial class MethodTransformerGenerator : ISourceGenerator
+public partial class MethodTransformerGenerator
 {
     private static void GenerateExports(GeneratorExecutionContext context, ImportExportSyntaxReceiver receiver)
     {
@@ -24,8 +22,6 @@ public partial class MethodTransformerGenerator : ISourceGenerator
             var namespaceName = compilation.GetSemanticModel(classDeclaration.SyntaxTree)
                 .GetDeclaredSymbol(classDeclaration)!
                 .ContainingNamespace;
-
-            var jsonContextType = GetJsonContextType(compilation, classDeclaration);
 
             var methodsSource = new StringBuilder();
 
@@ -47,16 +43,17 @@ public partial class MethodTransformerGenerator : ISourceGenerator
     public static ulong {methodName}_Entry()
     {{");
 
-                    var paramsCall = GenerateParameterInitCode(methodSymbol, methodsSource, jsonContextType);
+                    var paramsCall = GenerateParameterInitCode(methodSymbol, methodsSource);
 
                     if (methodSymbol.ReturnsVoid)
                     {
                         methodsSource.AppendLine($"        {className}.{methodName}({paramsCall});");
                     }
-                    else
+                    else if (!IsWasmPrimitive(methodSymbol))
                     {
                         methodsSource.AppendLine($"        var result = {className}.{methodName}({paramsCall});");
-                        methodsSource.AppendLine($"        Extism.Pdk.SetOutputJson(result, {jsonContextType}.Default.{methodSymbol.ReturnType.Name});\n");
+                        methodsSource.AppendLine($"        var json = PolyType.Examples.JsonSerializer.JsonSerializerTS.Serialize(result);");
+                        methodsSource.AppendLine($"        Extism.Pdk.SetOutput(json);\n");
                     }
 
                     methodsSource.AppendLine(@"        return 0;
@@ -79,11 +76,28 @@ public static partial class {className}
         }
     }
 
-    private static string GenerateParameterInitCode(IMethodSymbol? method, StringBuilder builder, string jsonContextType)
+    private static bool IsWasmPrimitive(IMethodSymbol methodSymbol)
+    {
+        return methodSymbol.ReturnType.Name switch
+            {
+                "Int32" => true,
+                "Int64" => true,
+                "UInt32" => true,
+                "UInt64" => true,
+                "Byte" => true,
+                "SByte" => true,
+                "Double" => true,
+                "Single" => true,
+                _ => false
+            };
+    }
+
+    private static string GenerateParameterInitCode(IMethodSymbol? method, StringBuilder builder)
     {
         if (method!.Parameters.Length == 0) return string.Empty;
 
-        builder.AppendLine($"        var parameters = Extism.Pdk.GetInputJson<{GetParameterClassName(method)}>({jsonContextType}.Default.{GetParameterClassName(method)});\n");
+        builder.AppendLine("        var input = Extism.Pdk.GetInput();\n");
+        builder.AppendLine($"        var parameters = PolyType.Examples.JsonSerializer.JsonSerializerTS.Deserialize<{GetParameterClassName(method)}>(System.Text.Encoding.UTF8.GetString(input));\n");
 
         return string.Join(",", method!.Parameters.Select(_ => $"parameters.{_.Name}"));
     }

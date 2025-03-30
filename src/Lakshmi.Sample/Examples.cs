@@ -1,24 +1,42 @@
-using System.Runtime.InteropServices;
 using Extism;
 using Lakshmi.Sample.Models;
+using Lakshmi.Sample.Shared;
 
 namespace Lakshmi.Sample;
 
-[JsonContext(typeof(JsonContext))]
+/*
+
+            HostFunction.FromMethod<int, int>("square", null, (plugin, a) => a * a),
+            HostFunction.FromMethod("printHello", null, (plugin) => Console.WriteLine("Hello, World!")),
+            HostFunction.FromMethod<int>("printNumber", null, (plugin, a) => Console.WriteLine($"Number: {a}"))
+ */
+
 public partial class Examples
 {
-    [Import("moss", Entry ="addPoint")]
-    private static partial int AddPoint();
+    [Import("extism", Entry ="add")]
+    private static extern int Add(int a, int b);
 
-    [Export("moss_extension_unregister")]
-    public static void Unregister()
+    [Export("empty")]
+    public static void Empty()
     {
+        Pdk.Log(LogLevel.Debug, Add(1, 2).ToString());
+        Pdk.Log(LogLevel.Debug, "Empty called");
     }
 
-    [Export("moss_extension_loop")]
-    public static void Loop()
+    [Export("primRet")]
+    public static int primRet()
     {
+        return 42;
     }
+
+    [Export("initPoint")]
+    public static Point InitPoint()
+    {
+        Pdk.Log(LogLevel.Debug, "InitPoint called");
+        return new Point(1, 2);
+    }
+
+
 
     [Export("moss_extension_register")]
     public static ExtensionInfo Register(MossState state)

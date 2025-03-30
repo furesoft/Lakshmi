@@ -1,3 +1,6 @@
-﻿namespace Lakshmi.Sample.Shared;
+﻿using PolyType;
 
-public record Rect(Point TopLeft, Point BottomRight);
+namespace Lakshmi.Sample.Shared;
+
+[GenerateShape]
+public partial record Rect(Point TopLeft, Point BottomRight);
