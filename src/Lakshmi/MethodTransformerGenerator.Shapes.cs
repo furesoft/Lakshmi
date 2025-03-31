@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -71,10 +71,7 @@ namespace System;" + "\n\n" + sb);
 
             foreach (var parameter in methodSymbol.Parameters)
             {
-
             }
-
-
         }
 
         sb.AppendLine(@"    public PolyType.Abstractions.ITypeShape? GetShape(Type type)
@@ -96,6 +93,5 @@ using System;
 
 namespace System;" + "\n\n" + sb);
     }
-
 }
 
