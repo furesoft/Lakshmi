@@ -23,12 +23,6 @@ To work with Lakshmi you have to reference the dotnet extism pdk. Using extism f
 ```csharp
 record MyPoint(int x, int y);
 
-[JsonSerializable(typeof(MyPoint))]
-internal partial class JsonContext : JsonSerializerContext
-{
-}
-
-[JsonContext(typeof(JsonContext))]
 class Test {
   [Import("host", Entry="add")]
   public partial int Add(int a, int b);
@@ -43,12 +37,6 @@ class Test {
 ```csharp
 record ExtensionInfo(string author, string[] allowed_hosts);
 
-[JsonSerializable(typeof(ExtensionInfo))]
-internal partial class JsonContext : JsonSerializerContext
-{
-}
-
-[JsonContext(typeof(JsonContext))]
 class Test {
   [Export("register")]
   public static ExtensionInfo Register() {
@@ -56,3 +44,7 @@ class Test {
   }
 }
 ```
+
+# How does it work?
+
+Under the Hood Lakshma uses a source generator that generates all the necessary temproary classes and builds a type shape, see [PolyType](https://github.com/eiriktsarpalis/PolyType), to make sure the deserialization works for aot. Imported/exported methods are wrapped in special generated methods.

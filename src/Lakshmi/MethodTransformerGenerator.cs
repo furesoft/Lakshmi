@@ -35,6 +35,8 @@ public partial class MethodTransformerGenerator
         }
 
         GenerateParameterClasses(context, candidateMethods);
+        GenerateParameterClassesShapes(context, candidateMethods);
+        GenerateParameterClassesShapesProvider(context);
     }
 
     private static void GenerateParameterClasses(GeneratorExecutionContext context, List<MethodDeclarationSyntax> methods)
@@ -51,12 +53,11 @@ public partial class MethodTransformerGenerator
 
             var className = GetParameterClassName(methodSymbol);
 
-            sb.AppendLine($@"public class {className} {{");
+            sb.AppendLine($@"public partial class {className} {{");
 
             foreach (var parameter in methodSymbol.Parameters)
             {
                 sb.AppendLine($@"
-    [JsonPropertyName(""{parameter.Name}"")]
     public {parameter.Type} {parameter.Name} {{ get; set; }}
 ");
             }
@@ -66,7 +67,6 @@ public partial class MethodTransformerGenerator
 
         context.AddSource("ParameterClasses.g.cs", @"
 using System;
-using System.Text.Json.Serialization;
 
 namespace System;" + "\n\n" + sb);
     }
