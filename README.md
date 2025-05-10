@@ -16,7 +16,6 @@ Lakshmi is a source generator for c# to make working with extism pdk more the id
 # Usage
 
 To work with Lakshmi you have to reference the dotnet extism pdk. Using extism forces you to write a more native like c#. Lashmi provides a source generator to use higher level types.
-- Importand: Every class that has exporting/importing functions must be annotated with the `JsonContext`-Attribute and a custom JsonContext must be created [see](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation). Later versions will generate the coresponding jsontype info for you
 
 ## Importing functions
 
